@@ -3,19 +3,16 @@ import time
 import smbus2
 import logging
 
-DEVICE_ADDRESS = 0x6b
-ACCEL_FULL_SCALES = {0b00: 2, 0b01: 16, 0b10: 4, 0b11: 8}           # in +/- g terms
-GYRO_FULL_SCALES = {0b00: 245, 0b01: 500, 0b10: 1000, 0b11: 2000}    # in dps
-DOUT_WORD_LENGTH = 16    # in number of bits
+DEVICE_ADDRESS = 0x6B
 WHO_AM_I_ID = 0x69
+DOUT_WORD_LENGTH = 16    # in number of bits
+
+FS_XL_DICT = {2: 0b00, 16: 0b01, 4: 0b10, 8: 0b11}           # in +/- g terms
+BW_XL_DICT = {400: 0b00, 200: 0b01, 100: 0b10, 50: 0b11}   # in Hz
+FS_G_DICT = {125: 0b001, 245: 0b000, 500: 0b010, 1000: 0b100, 2000: 0b110}    # in dps
 
 ODR_XL = 0b1000
-FS_XL = 0b00
-BW_XL = 0b00
-
 ODR_G = 0b1000
-FS_G = 0b00
-FS_125 = 0
 
 # Not all registers are listed here
 class RegAddr(IntEnum):
@@ -58,44 +55,47 @@ class RegAddr(IntEnum):
 
 
 class LSM6DS33:
-    def __init__(self):
-        self.bus = smbus2.SMBus(1)
-        id = self.bus.read_byte_data(DEVICE_ADDRESS, RegAddr.WHO_AM_I)
+    def __init__(self, fs_accel, bw_accel, fs_gyro):   # TODO: implement ODR
+        self._fs_accel = fs_accel
+        self._bw_accel = bw_accel
+        self._fs_gyro = fs_gyro
+        
+        self._bus = smbus2.SMBus(1)
+        id = self._bus.read_byte_data(DEVICE_ADDRESS, RegAddr.WHO_AM_I)
         assert(id == WHO_AM_I_ID)
         logging.info("Connection to LSM6DS33 established successfully")
         
         # Power on and configure device
-        accel_mode = ODR_XL<<4 | FS_XL<<2 | BW_XL
-        self.bus.write_byte_data(DEVICE_ADDRESS, RegAddr.CTRL1_XL, accel_mode)
+        FS_XL = FS_XL_DICT[self._fs_accel]
+        BW_XL = BW_XL_DICT[self._bw_accel]
+        mode_accel = ODR_XL<<4 | FS_XL<<2 | BW_XL
+        self._bus.write_byte_data(DEVICE_ADDRESS, RegAddr.CTRL1_XL, mode_accel)
         
-        gyro_mode = ODR_G<<4 | FS_G<<2 | FS_125<<1
-        self.bus.write_byte_data(DEVICE_ADDRESS, RegAddr.CTRL2_G, gyro_mode)
+        FS_G = FS_G_DICT[self._fs_gyro]
+        mode_gyro = ODR_G<<4 | FS_G<<2
+        self._bus.write_byte_data(DEVICE_ADDRESS, RegAddr.CTRL2_G, mode_gyro)
 
 
     def accel_reading(self, axis):
         if axis not in ['x', 'y', 'z']:
             raise ValueError("axis should be 'x', 'y' or 'z'")
         axis_offset =  (ord(axis) - ord('x')) * 2
-        raw_bytes = self.bus.read_i2c_block_data(DEVICE_ADDRESS, RegAddr.OUTX_L_XL + axis_offset, 2)
-        accel = int.from_bytes(raw_bytes, byteorder='little', signed=True) / (2**DOUT_WORD_LENGTH / (2*ACCEL_FULL_SCALES[FS_XL]))
+        raw_bytes = self._bus.read_i2c_block_data(DEVICE_ADDRESS, RegAddr.OUTX_L_XL + axis_offset, 2)
+        accel = int.from_bytes(raw_bytes, byteorder='little', signed=True) / (2**DOUT_WORD_LENGTH / (2*self._fs_accel))
         return accel
     
     def gyro_reading(self, axis):
         if axis not in ['x', 'y', 'z']:
             raise ValueError("axis should be 'x', 'y' or 'z'")
         axis_offset =  (ord(axis) - ord('x')) * 2
-        raw_bytes = self.bus.read_i2c_block_data(DEVICE_ADDRESS, RegAddr.OUTX_L_G + axis_offset, 2)
-        if FS_125 == 1:
-            gyro_full_scale = 125
-        else:
-            gyro_full_scale = GYRO_FULL_SCALES[FS_G]
-        ang_rate = int.from_bytes(raw_bytes, byteorder='little', signed=True) / (2**DOUT_WORD_LENGTH / (2*gyro_full_scale))
+        raw_bytes = self._bus.read_i2c_block_data(DEVICE_ADDRESS, RegAddr.OUTX_L_G + axis_offset, 2)
+        ang_rate = int.from_bytes(raw_bytes, byteorder='little', signed=True) / (2**DOUT_WORD_LENGTH / (2*self._fs_gyro))
         return ang_rate
 
 
 if __name__ == "__main__":
     try:
-        imu = LSM6DS33()
+        imu = LSM6DS33(fs_accel=2, bw_accel=200, fs_gyro=245)
     except AssertionError as err:
         logging.error("Device ID does not match")
         raise err
