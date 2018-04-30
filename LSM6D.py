@@ -4,13 +4,18 @@ import smbus2
 import logging
 
 DEVICE_ADDRESS = 0x6b
-FULL_SCALE = 2    # in +/- g terms
+ACCEL_FULL_SCALES = {0b00: 2, 0b01: 16, 0b10: 4, 0b11: 8}           # in +/- g terms
+GYRO_FULL_SCALES = {0b00: 245, 0b01: 500, 0b10: 1000, 0b11: 2000}    # in dps
 DOUT_WORD_LENGTH = 16    # in number of bits
 WHO_AM_I_ID = 0x69
 
 ODR_XL = 0b1000
 FS_XL = 0b00
 BW_XL = 0b00
+
+ODR_G = 0b1000
+FS_G = 0b00
+FS_125 = 0
 
 # Not all registers are listed here
 class RegAddr(IntEnum):
@@ -58,9 +63,13 @@ class LSM6DS33:
         id = self.bus.read_byte_data(DEVICE_ADDRESS, RegAddr.WHO_AM_I)
         assert(id == WHO_AM_I_ID)
         logging.info("Connection to LSM6DS33 established successfully")
+        
         # Power on and configure device
-        mode = ODR_XL<<4 | FS_XL<<2 | BW_XL
-        self.bus.write_byte_data(DEVICE_ADDRESS, RegAddr.CTRL1_XL, mode)
+        accel_mode = ODR_XL<<4 | FS_XL<<2 | BW_XL
+        self.bus.write_byte_data(DEVICE_ADDRESS, RegAddr.CTRL1_XL, accel_mode)
+        
+        gyro_mode = ODR_G<<4 | FS_G<<2 | FS_125<<1
+        self.bus.write_byte_data(DEVICE_ADDRESS, RegAddr.CTRL2_G, gyro_mode)
 
 
     def accel_reading(self, axis):
@@ -68,11 +77,20 @@ class LSM6DS33:
             raise ValueError("axis should be 'x', 'y' or 'z'")
         axis_offset =  (ord(axis) - ord('x')) * 2
         raw_bytes = self.bus.read_i2c_block_data(DEVICE_ADDRESS, RegAddr.OUTX_L_XL + axis_offset, 2)
-        accel = int.from_bytes(raw_bytes, byteorder='little', signed=True) / (2**DOUT_WORD_LENGTH / (2*FULL_SCALE))
+        accel = int.from_bytes(raw_bytes, byteorder='little', signed=True) / (2**DOUT_WORD_LENGTH / (2*ACCEL_FULL_SCALES[FS_XL]))
         return accel
     
-    def gyro_reading(self,axis):
-        pass
+    def gyro_reading(self, axis):
+        if axis not in ['x', 'y', 'z']:
+            raise ValueError("axis should be 'x', 'y' or 'z'")
+        axis_offset =  (ord(axis) - ord('x')) * 2
+        raw_bytes = self.bus.read_i2c_block_data(DEVICE_ADDRESS, RegAddr.OUTX_L_G + axis_offset, 2)
+        if FS_125 == 1:
+            gyro_full_scale = 125
+        else:
+            gyro_full_scale = GYRO_FULL_SCALES[FS_G]
+        ang_rate = int.from_bytes(raw_bytes, byteorder='little', signed=True) / (2**DOUT_WORD_LENGTH / (2*gyro_full_scale))
+        return ang_rate
 
 
 if __name__ == "__main__":
@@ -83,7 +101,8 @@ if __name__ == "__main__":
         raise err
     
     while True:
-        print("x-accel = ", imu.accel_reading('z'))
+        print("z-accel = ", imu.accel_reading('z'))
+        print("z_gyro = ", imu.gyro_reading('z'))
         time.sleep(0.10)
         
 
