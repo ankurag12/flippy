@@ -1,21 +1,15 @@
 import smbus2
 import time
 import sys
+from LSM6D import LSM6DS33
 
-# Open i2c bus 1
-bus = smbus2.SMBus(1)
+try:
+    imu = LSM6DS33(odr_accel=1660, fs_accel=2, bw_accel=200, odr_gyro=1660, fs_gyro=245)
+except AssertionError as err:
+    logging.error("Device ID does not match")
+    raise err
 
-b = bus.read_byte_data(0x1e, 0x0f)
-
-print(b)
-
-# Set accelerometer operating mode
-data = 0b10000000
-bus.write_byte_data(0x6b, 0x10, data)
-
-while True :
-    z_accel = bus.read_i2c_block_data(0x6b, 0x2c, 2)
-
-    print(int.from_bytes(z_accel, byteorder='little', signed=True)/16384.0)
-    time.sleep(0.1)
-bus.close()
+while True:
+    print("z-accel = ", imu.accel_reading('z'))
+    print("z-gyro = ", imu.gyro_reading('z'))
+    time.sleep(0.10)
