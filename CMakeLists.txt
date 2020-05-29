@@ -11,10 +11,11 @@ message("CMAKE_HOME_DIRECTORY: ${CMAKE_HOME_DIRECTORY}")
 message("CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
 message("CMAKE_INCLUDE_PATH: ${CMAKE_INCLUDE_PATH}")
 
-include_directories(./include)
+include_directories(include)
 
-set(SOURCES ./src/main.cpp 
-            ./src/LSM6DS33.cpp)
+set(SOURCES src/main.cpp 
+            src/LSM6DS33.cpp
+            src/motor.cpp)
 
 add_executable(${TARGET} ${SOURCES})
 
