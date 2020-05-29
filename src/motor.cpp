@@ -1,8 +1,8 @@
 #include "motor.h"
 #include "utils.h"
-#include <wiringPi.h>
-#include <iostream>
 #include <cmath>
+#include <iostream>
+#include <wiringPi.h>
 
 Motor::Motor(MotorSide side) : _side(side) {
   wiringPiSetup();
@@ -16,10 +16,8 @@ Motor::Motor(MotorSide side) : _side(side) {
   pinMode(_pin_map.enc_b, INPUT);
 }
 
-Motor::~Motor() {
-  run(0);
-    }
-    
+Motor::~Motor() { run(0); }
+
 void Motor::run(double pwm) {
 
   // Clip pwm between -1.0 and 1.0
@@ -30,4 +28,3 @@ void Motor::run(double pwm) {
   int pwm_int = abs(int(pwm * MAX_PWM));
   pwmWrite(_pin_map.pwm, pwm_int);
 }
-

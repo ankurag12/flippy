@@ -13,7 +13,7 @@ struct MotorPins {
   int enc_b;
 };
 
-// Assuming WiringPi numbering scheme 
+// Assuming WiringPi numbering scheme
 // $ gpio readall    // wPi column
 const std::map<MotorSide, MotorPins> motor_pin_mapping = {
     {MotorSide::LEFT, {.pwm = 1, .gpio = 16, .enc_a = 4, .enc_b = 5}},
