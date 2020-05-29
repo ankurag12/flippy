@@ -24,12 +24,10 @@ void Motor::run(double pwm) {
 
   // Clip pwm between -1.0 and 1.0
   pwm = (pwm < -1.0) ? -1.0 : (pwm > 1.0) ? 1.0 : pwm;
-  std::cout<<"pwm = "<<pwm<<" pwm < 0 = " << (pwm < 0) << std::endl;
   digitalWrite(_pin_map.gpio, pwm < 0);
 
   // Scale pwm between 0 and MAX_PWM
   int pwm_int = abs(int(pwm * MAX_PWM));
-  std::cout<<"pwm_int = " << pwm_int << std::endl;
   pwmWrite(_pin_map.pwm, pwm_int);
 }
 
