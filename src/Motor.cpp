@@ -1,4 +1,4 @@
-#include "motor.h"
+#include "Motor.h"
 #include "Encoder.h"
 #include "utils.h"
 #include <cmath>
@@ -27,7 +27,7 @@ Motor::Motor(MotorSide side) : _side(side) {
     wiringPiISR(_pin_map.enc_a, INT_EDGE_RISING, &ISR_rising_edge_a_right);
     wiringPiISR(_pin_map.enc_a, INT_EDGE_FALLING, &ISR_falling_edge_a_right);
     wiringPiISR(_pin_map.enc_b, INT_EDGE_RISING, &ISR_rising_edge_b_right);
-    wiringPiISR(_pin_map.enc_b, INT_EDGE_FALLING, &ISR_falling_edge_b_righth);
+    wiringPiISR(_pin_map.enc_b, INT_EDGE_FALLING, &ISR_falling_edge_b_right);
   }
 }
 

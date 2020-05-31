@@ -3,8 +3,8 @@
 
 #include <map>
 
-extern int g_tick_count_left = 0;
-extern int g_tick_count_right = 0;
+extern int g_tick_count_left;
+extern int g_tick_count_right;
 
 enum MotorSide { LEFT, RIGHT };
 

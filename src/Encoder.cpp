@@ -1,6 +1,13 @@
 #include "Encoder.h"
 #include <iostream>
 
+// Globals
+int g_tick_count_left = 0;
+int g_tick_count_right = 0;
+
+EdgeType g_last_edge_type_left = EdgeType::NONE;
+EdgeType g_last_edge_type_right = EdgeType::NONE;
+
 // ISRs cannot be class methods as there is no `this` argument with ISR so there
 // is no way to know what instance of the class the method belongs to
 void ISR_rising_edge_a_left() {
