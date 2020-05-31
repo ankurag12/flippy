@@ -1,6 +1,6 @@
 
 #include "LSM6DS33.h"
-#include "motor.h"
+#include "Motor.h"
 #include <chrono>
 #include <errno.h>
 #include <iostream>

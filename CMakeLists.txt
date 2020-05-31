@@ -15,14 +15,11 @@ include_directories(include)
 
 set(SOURCES src/main.cpp 
             src/LSM6DS33.cpp
-            src/motor.cpp)
+            src/Motor.cpp
+            src/Encoder.cpp)
 
 add_executable(${TARGET} ${SOURCES})
 
 target_link_libraries(${TARGET} wiringPi)
 
-add_executable(manual_test_imu test/manual_test_imu.cpp src/LSM6DS33.cpp)
-target_link_libraries(manual_test_imu wiringPi)
-
-add_executable(manual_test_motor test/manual_test_motor.cpp src/motor.cpp)
-target_link_libraries(manual_test_motor wiringPi)
+add_subdirectory(test)
