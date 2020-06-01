@@ -12,22 +12,20 @@ Motor::Motor(MotorSide side) : _side(side) {
   pinMode(mode_pin, OUTPUT);
   digitalWrite(mode_pin, 1);
 
-  // Configure pins for PWM and phase
+  // Configure pins for PWM, phase and encoders
   _pin_map = motor_pin_mapping.at(_side);
   pinMode(_pin_map.gpio, OUTPUT);
   pinMode(_pin_map.pwm, PWM_OUTPUT);
+  pinMode(_pin_map.enc_a, INPUT);
+  pinMode(_pin_map.enc_b, INPUT);
 
   // Configure rising and falling edge ISRs on pins for encoders
   if (_side == MotorSide::LEFT) {
-    wiringPiISR(_pin_map.enc_a, INT_EDGE_RISING, &ISR_rising_edge_a_left);
-    wiringPiISR(_pin_map.enc_a, INT_EDGE_FALLING, &ISR_falling_edge_a_left);
-    wiringPiISR(_pin_map.enc_b, INT_EDGE_RISING, &ISR_rising_edge_b_left);
-    wiringPiISR(_pin_map.enc_b, INT_EDGE_FALLING, &ISR_falling_edge_b_left);
+    wiringPiISR(_pin_map.enc_a, INT_EDGE_BOTH, &ISR_any_edge_left);
+    wiringPiISR(_pin_map.enc_b, INT_EDGE_BOTH, &ISR_any_edge_left);
   } else if (_side == MotorSide::RIGHT) {
-    wiringPiISR(_pin_map.enc_a, INT_EDGE_RISING, &ISR_rising_edge_a_right);
-    wiringPiISR(_pin_map.enc_a, INT_EDGE_FALLING, &ISR_falling_edge_a_right);
-    wiringPiISR(_pin_map.enc_b, INT_EDGE_RISING, &ISR_rising_edge_b_right);
-    wiringPiISR(_pin_map.enc_b, INT_EDGE_FALLING, &ISR_falling_edge_b_right);
+    wiringPiISR(_pin_map.enc_a, INT_EDGE_BOTH, &ISR_any_edge_right);
+    wiringPiISR(_pin_map.enc_b, INT_EDGE_BOTH, &ISR_any_edge_right);
   }
 }
 

@@ -1,22 +1,8 @@
 #ifndef ENCODER_H_
 #define ENCODER_H_
 
-enum EdgeType {
-    RISING_EDGE_A = 0,
-    RISING_EDGE_B = 1,
-    FALLING_EDGE_A = 2,
-    FALLING_EDGE_B = 3,
-    NONE = -1
-};
-
-void ISR_rising_edge_a_left();
-void ISR_falling_edge_a_left();
-void ISR_rising_edge_b_left();
-void ISR_falling_edge_b_left();
-void ISR_rising_edge_a_right();
-void ISR_falling_edge_a_right();
-void ISR_rising_edge_b_right();
-void ISR_falling_edge_b_right();
-void update_tick_count(EdgeType current_edge_type, EdgeType &last_edge_type,
-                       int &tick_count);
-#endif    // Encoder.h
+void ISR_any_edge_left();
+void ISR_any_edge_right();
+void update_tick_count(volatile int *last_enc_ab_state,
+                       volatile int *tick_count, int pin_a, int pin_b);
+#endif // Encoder.h

@@ -3,8 +3,8 @@
 
 #include <map>
 
-extern int g_tick_count_left;
-extern int g_tick_count_right;
+extern volatile int g_tick_count_left;
+extern volatile int g_tick_count_right;
 
 enum MotorSide { LEFT, RIGHT };
 
@@ -20,7 +20,7 @@ struct MotorPins {
 // $ gpio readall    // wPi column
 const std::map<MotorSide, MotorPins> motor_pin_mapping = {
     {MotorSide::LEFT, {.pwm = 1, .gpio = 16, .enc_a = 4, .enc_b = 5}},
-    {MotorSide::RIGHT, {.pwm = 24, .gpio = 25, .enc_a = 21, .enc_b = 22}}};
+    {MotorSide::RIGHT, {.pwm = 24, .gpio = 25, .enc_a = 6, .enc_b = 10}}};
 const int mode_pin = 15;
 const uint MAX_PWM = 1024;
 
@@ -41,7 +41,6 @@ private:
   const uint _enc_counts_per_rev = 12;
   int _current_tick_count = 0;
   int _prev_tick_count = 0;
-
 
 };
 
