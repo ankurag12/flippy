@@ -17,22 +17,19 @@ Controller::Controller()
 }
 
 bool Controller::move_linear_dist(double speed_mps, double distance_m) {
-  double current_avg_ticks = (_left_motor.get_current_tick_count() +
-                              _right_motor.get_current_tick_count()) /
-                             2;
-  double required_avg_ticks = distance_m * _motor_enc_counts_per_rev *
-                              _motor_gear_ratio / (M_PI * _wheel_dia_m);
-  double target_avg_ticks = current_avg_ticks + required_avg_ticks;
-
-  double p_gain = 0.001;
+  double init_avg_ticks = (_left_motor.get_current_tick_count() +
+                           _right_motor.get_current_tick_count()) /
+                          2;
+  double p_gain = 5;
   double i_gain = 0.0;
   double d_gain = 0.0;
 
-  double err = target_avg_ticks - current_avg_ticks;
+  double err = distance_m;
   double prev_err = 0;
   int low_error_run_count = 0;
   const int low_error_run_count_thresh = 3;
-  const double err_change_thresh = 0.01;
+  const double err_change_thresh =
+      0.0001; // In the units of the quantity being controlled i.e, meters
 
   // Since we have seen cases where `err` isn't updated (spurious wake-ups from
   // sleep?), we look for a few consecutive runs with low change in error
@@ -45,11 +42,14 @@ bool Controller::move_linear_dist(double speed_mps, double distance_m) {
 
     std::this_thread::sleep_for(10ms); // Loop rate (approximate)
 
-    current_avg_ticks = (_left_motor.get_current_tick_count() +
-                         _right_motor.get_current_tick_count()) /
-                        2;
+    double delta_avg_ticks = (_left_motor.get_current_tick_count() +
+                              _right_motor.get_current_tick_count()) /
+                                 2 -
+                             init_avg_ticks;
+    double distance_travelled = delta_avg_ticks * (M_PI * _wheel_dia_m) /
+                                (_motor_enc_counts_per_rev * _motor_gear_ratio);
     prev_err = err;
-    err = target_avg_ticks - current_avg_ticks;
+    err = distance_m - distance_travelled;
     std::cout << "err = " << err << " prev_err = " << prev_err << std::endl;
     if (fabs(err - prev_err) < err_change_thresh) {
       low_error_run_count++;
@@ -57,7 +57,6 @@ bool Controller::move_linear_dist(double speed_mps, double distance_m) {
       low_error_run_count = 0;
     }
   }
-
   stop();
   return true;
 }

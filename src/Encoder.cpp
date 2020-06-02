@@ -35,7 +35,7 @@ void update_tick_count(volatile int *last_enc_ab_state,
   enc_ab_state = (digitalRead(pin_a) << 1) | digitalRead(pin_b);
   increment = quad_enc_increment_map[*last_enc_ab_state][enc_ab_state];
   if (increment == 2) {
-    std::cout << "S" << std::endl;
+    std::cout << "WARNING: Skip in encoder!" << std::endl;
   } else {
     *tick_count += increment;
   }

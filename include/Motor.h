@@ -44,7 +44,6 @@ private:
   MotorPins _pin_map;
   int _current_tick_count = 0;
   int _prev_tick_count = 0;
-
 };
 
 #endif // MOTOR_H_

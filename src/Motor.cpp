@@ -22,13 +22,14 @@ Motor::Motor(MotorSide side) : _side(side) {
   // Set the inital encoder readings as "last"
   // Configure rising and falling edge ISRs on pins for encoders
   // Ideally this section should be wrapped in an "interrupts disabled" zone
-  if (_side == MotorSide::LEFT) 
-  {
-    g_last_enc_ab_state_left = (digitalRead(_pin_map.enc_a) << 1) | digitalRead(_pin_map.enc_b);
+  if (_side == MotorSide::LEFT) {
+    g_last_enc_ab_state_left =
+        (digitalRead(_pin_map.enc_a) << 1) | digitalRead(_pin_map.enc_b);
     wiringPiISR(_pin_map.enc_a, INT_EDGE_BOTH, &ISR_any_edge_left);
     wiringPiISR(_pin_map.enc_b, INT_EDGE_BOTH, &ISR_any_edge_left);
   } else if (_side == MotorSide::RIGHT) {
-    g_last_enc_ab_state_right = (digitalRead(_pin_map.enc_a) << 1) | digitalRead(_pin_map.enc_b);
+    g_last_enc_ab_state_right =
+        (digitalRead(_pin_map.enc_a) << 1) | digitalRead(_pin_map.enc_b);
     wiringPiISR(_pin_map.enc_a, INT_EDGE_BOTH, &ISR_any_edge_right);
     wiringPiISR(_pin_map.enc_b, INT_EDGE_BOTH, &ISR_any_edge_right);
   }

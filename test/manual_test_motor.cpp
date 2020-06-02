@@ -24,7 +24,6 @@ int main() {
   std::cout << "Left motor tick count = " << left_motor.get_current_tick_count()
             << std::endl;
 
-
   Motor right_motor = Motor(MotorSide::RIGHT);
   std::cout << "Right motor tick count = "
             << right_motor.get_current_tick_count() << std::endl;
@@ -41,6 +40,6 @@ int main() {
   right_motor.run(0);
   std::cout << "Right motor tick count = "
             << right_motor.get_current_tick_count() << std::endl;
-  
+
   return 0;
 }
