@@ -15,3 +15,11 @@ add_executable(manual_test_motor
     ../src/Motor.cpp 
     ../src/Encoder.cpp)
 target_link_libraries(manual_test_motor wiringPi)
+
+add_executable(manual_test_controller 
+    manual_test_controller.cpp 
+    ../src/Motor.cpp 
+    ../src/Encoder.cpp
+    ../src/Controller.cpp
+    ../src/LSM6DS33.cpp)
+target_link_libraries(manual_test_controller wiringPi)

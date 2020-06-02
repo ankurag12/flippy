@@ -27,9 +27,9 @@ private:
 
   int _dev_handle;
 
-  static const byte _device_address = 0x6b;
-  static const byte _who_am_i_id = 0x69;
-  static const byte _dout_word_length = 16;
+  static constexpr byte _device_address = 0x6b;
+  static constexpr byte _who_am_i_id = 0x69;
+  static constexpr byte _dout_word_length = 16;
 
   // Map for full scale for the accelerometer in +/- g
   static const std::map<uint, byte> _fs_accel_map;

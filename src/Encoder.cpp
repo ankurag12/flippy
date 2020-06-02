@@ -4,14 +4,16 @@
 #include <wiringPi.h>
 
 // Globals
-volatile int g_tick_count_left;
-volatile int g_tick_count_right;
+volatile int g_tick_count_left = 0;
+volatile int g_tick_count_right = 0;
 
-volatile int g_last_enc_ab_state_left = -1;
-volatile int g_last_enc_ab_state_right = -1;
+volatile int g_last_enc_ab_state_left;
+volatile int g_last_enc_ab_state_right;
 
-const int quad_enc_increment_map[4][4] = {
+static constexpr int quad_enc_increment_map[4][4] = {
     {0, -1, 1, 2}, {1, 0, 2, -1}, {-1, 2, 0, 1}, {2, 1, -1, 0}};
+static int enc_ab_state;
+static int increment;
 
 // ISRs cannot be class methods as there is no `this` argument with ISR so there
 // is no way to know what instance of the class the method belongs to
@@ -30,18 +32,12 @@ void ISR_any_edge_right() {
 void update_tick_count(volatile int *last_enc_ab_state,
                        volatile int *tick_count, int pin_a, int pin_b) {
 
-  int enc_a_state = digitalRead(pin_a);
-  int enc_b_state = digitalRead(pin_b);
-  int enc_ab_state = (enc_a_state << 1) | enc_b_state;
-  if (*last_enc_ab_state == -1) {
-    *tick_count = 0;
+  enc_ab_state = (digitalRead(pin_a) << 1) | digitalRead(pin_b);
+  increment = quad_enc_increment_map[*last_enc_ab_state][enc_ab_state];
+  if (increment == 2) {
+    std::cout << "S" << std::endl;
   } else {
-    int increment = quad_enc_increment_map[*last_enc_ab_state][enc_ab_state];
-    if (increment == 2) {
-      std::cout << "WARNING: Skip in encoder detected!" << std::endl;
-    } else {
-      *tick_count += increment;
-    }
+    *tick_count += increment;
   }
   *last_enc_ab_state = enc_ab_state;
 }

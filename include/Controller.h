@@ -19,11 +19,14 @@ public:
   bool stop();
 
 private:
-  const double _wheel_dia = 0.06;
-  const double _wheelbase = 0.1;
-  const double _max_linear_speed;
-  const double _max_rotational_speed;
+  static constexpr double _wheel_dia_m = 0.06;
+  static constexpr double _wheelbase_m = 0.1;
+  static constexpr double _motor_no_load_rpm = Motor::no_load_rpm;
+  static constexpr double _motor_gear_ratio = Motor::gear_ratio;
+  static constexpr uint _motor_enc_counts_per_rev = Motor::enc_counts_per_rev;
+  double _max_linear_speed;
+  double _max_rotational_speed;
   Motor _left_motor;
   Motor _right_motor;
   LSM6DS33 _imu;
-}
+};

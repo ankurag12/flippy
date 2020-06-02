@@ -16,7 +16,8 @@ include_directories(include)
 set(SOURCES src/main.cpp 
             src/LSM6DS33.cpp
             src/Motor.cpp
-            src/Encoder.cpp)
+            src/Encoder.cpp
+            src/Controller.cpp)
 
 add_executable(${TARGET} ${SOURCES})
 
