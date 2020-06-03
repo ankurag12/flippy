@@ -10,7 +10,7 @@ enum Axis { X = 0, Y = 2, Z = 4 };
 
 class LSM6DS33 {
 public:
-  LSM6DS33() {}
+  LSM6DS33(int host_id = -1);
 
   bool init(uint odr_accel, uint fs_accel, uint filter_bw_accel, uint odr_gyro,
             uint fs_gyro);
@@ -25,7 +25,8 @@ private:
   uint _odr_gyro;
   uint _fs_gyro;
 
-  int _dev_handle;
+  int _host_id = -1;
+  int _i2c_handle;
 
   static constexpr byte _device_address = 0x6b;
   static constexpr byte _who_am_i_id = 0x69;

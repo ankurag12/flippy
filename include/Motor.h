@@ -19,18 +19,18 @@ struct MotorPins {
   int enc_b;
 };
 
-// Assuming WiringPi numbering scheme
-// $ gpio readall    // wPi column
+// Assuming BCM GPIO numbering scheme
+// $ gpio readall    // BCM column
 const std::map<MotorSide, MotorPins> motor_pin_mapping = {
-    {MotorSide::LEFT, {.pwm = 1, .gpio = 16, .enc_a = 4, .enc_b = 5}},
-    {MotorSide::RIGHT, {.pwm = 24, .gpio = 25, .enc_a = 6, .enc_b = 10}}};
-const int mode_pin = 15;
+    {MotorSide::LEFT, {.pwm = 18, .gpio = 15, .enc_a = 23, .enc_b = 24}},
+    {MotorSide::RIGHT, {.pwm = 19, .gpio = 26, .enc_a = 25, .enc_b = 8}}};
+const int mode_pin = 14;
 const uint max_pwm = 500;
 
 class Motor {
 
 public:
-  Motor(MotorSide side);
+  Motor(MotorSide side, int host_id = -1);
   ~Motor();
   void run(double pwm);
   int get_current_tick_count();
@@ -44,6 +44,7 @@ private:
   MotorPins _pin_map;
   int _current_tick_count = 0;
   int _prev_tick_count = 0;
+  int _host_id;
 };
 
 #endif // MOTOR_H_
