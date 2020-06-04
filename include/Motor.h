@@ -25,7 +25,7 @@ const std::map<MotorSide, MotorPins> motor_pin_mapping = {
     {MotorSide::LEFT, {.pwm = 18, .gpio = 15, .enc_a = 23, .enc_b = 24}},
     {MotorSide::RIGHT, {.pwm = 19, .gpio = 26, .enc_a = 25, .enc_b = 8}}};
 const int mode_pin = 14;
-const uint max_pwm = 500;
+constexpr double max_pwm = 0.5;
 
 class Motor {
 

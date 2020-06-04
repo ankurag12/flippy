@@ -21,7 +21,7 @@ Motor::Motor(MotorSide side, int host_id) : _side(side), _host_id(host_id) {
   set_digital_io_mode(_host_id, _pin_map.gpio, DigitalIoMode::WRITE_OUTPUT);
 
   // PWM
-  set_pwm_mode(_host_id, _pin_map.pwm);
+  set_pwm_mode(_host_id, _pin_map.pwm, 10000);
 
   // Encoders
   set_digital_io_mode(_host_id, _pin_map.enc_a, DigitalIoMode::READ_INPUT);
@@ -53,13 +53,10 @@ Motor::~Motor() { run(0); }
 
 void Motor::run(double pwm) {
 
-  // Clip pwm between -1.0 and 1.0
-  pwm = (pwm < -1.0) ? -1.0 : (pwm > 1.0) ? 1.0 : pwm;
+  // Clip pwm between -max_pwm and max_pwm
+  pwm = (pwm < -max_pwm) ? -max_pwm : (pwm > max_pwm) ? max_pwm : pwm;
   write_digital_io(_host_id, _pin_map.gpio, pwm < 0);
-
-  // Scale pwm between 0 and max_pwm
-  int pwm_int = abs(int(pwm * max_pwm));
-  write_pwm_dutycycle(_host_id, _pin_map.pwm, pwm_int);
+  write_pwm_dutycycle(_host_id, _pin_map.pwm, fabs(pwm));
 }
 
 int Motor::get_current_tick_count() {

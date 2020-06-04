@@ -1,0 +1,64 @@
+#include "HwImpl.h"
+#include <iostream>
+#include <pigpiod_if2.h>
+
+static uint pwm_freq;
+
+int init_gpio() { return pigpio_start(NULL, NULL); }
+
+void end_gpio(int host_id) { pigpio_stop(host_id); }
+
+int init_i2c(int host_id, uint dev_address) {
+  return i2c_open(host_id, 1, dev_address, 0);
+}
+
+int read_i2c_byte(int host_id, int i2c_handler, uint reg_address) {
+  return i2c_read_byte_data(host_id, i2c_handler, reg_address);
+}
+
+int write_i2c_byte(int host_id, int i2c_handler, uint reg_address, uint data) {
+  return i2c_write_byte_data(host_id, i2c_handler, reg_address, data);
+}
+
+int set_digital_io_mode(int host_id, uint pin, DigitalIoMode mode) {
+  if (mode == DigitalIoMode::READ_INPUT) {
+    return set_mode(host_id, pin, PI_INPUT);
+  } else if (mode == DigitalIoMode::WRITE_OUTPUT) {
+    return set_mode(host_id, pin, PI_OUTPUT);
+  }
+  return 0;
+}
+
+int write_digital_io(int host_id, uint pin, bool val) {
+  return gpio_write(host_id, pin, (uint)val);
+}
+
+int read_digital_io(int host_id, uint pin) { return gpio_read(host_id, pin); }
+
+int set_pwm_mode(int host_id, uint pin, uint freq) {
+  // Using pigpio's hardware PWM, as the normal PWM doesn't provide good range
+  // and frequency combination for good DC motor control
+  // The actual PWM range is 250M/PWMfreq. However, it expects the pwm input to
+  // be in the range 0 - 1,000,000 and does scaling automatically
+  pwm_freq = freq;
+  return hardware_PWM(host_id, pin, pwm_freq, 0);
+}
+
+int write_pwm_dutycycle(int host_id, uint pin, double dutycycle) {
+    return hardware_PWM(host_id, pin, pwm_freq, (uint)(dutycycle*1000000));
+}
+
+int set_hw_interrupt(int host_id, uint pin, EdgeType edge_type,
+                     void (*callback)()) {
+  switch (edge_type) {
+  case EdgeType::RISING:
+    return -1;
+  case EdgeType::FALLING:
+    return -1;
+  case EdgeType::EITHER:
+    return -1;
+  default:
+    std::cout << "Unknown EdgeType!" << std::endl;
+    return -1;
+  }
+}
