@@ -1,4 +1,5 @@
 #include "Controller.h"
+#include "HwImpl.h"
 #include <chrono>
 #include <cmath>
 #include <iostream>
@@ -9,9 +10,9 @@
 using namespace std::chrono_literals;
 
 Controller::Controller()
-    : _left_motor(Motor(MotorSide::LEFT)),
-      _right_motor(Motor(MotorSide::RIGHT)), _imu(LSM6DS33()) {
-
+    : _host_id(init_gpio()), _left_motor(Motor(MotorSide::LEFT, _host_id)),
+      _right_motor(Motor(MotorSide::RIGHT, _host_id)),
+      _imu(LSM6DS33(_host_id)) {
   // Initialize IMU
   _imu.init(1660, 2, 200, 1660, 245);
 }

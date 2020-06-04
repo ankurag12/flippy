@@ -26,6 +26,7 @@ private:
   static constexpr uint _motor_enc_counts_per_rev = Motor::enc_counts_per_rev;
   double _max_linear_speed;
   double _max_rotational_speed;
+  int _host_id;
   Motor _left_motor;
   Motor _right_motor;
   LSM6DS33 _imu;
