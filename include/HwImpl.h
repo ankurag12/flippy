@@ -34,7 +34,7 @@ int set_pwm_mode(int host_id, uint pin, uint freq=8000);
 int write_pwm_dutycycle(int host_id, uint pin, double dutycycle);
 
 // Interrupts
-int set_hw_interrupt(int host_id, uint pin, EdgeType edge_type, void(*callback)());
+int set_hw_interrupt(int host_id, uint pin, EdgeType edge_type, void(*isr_callback)());
 
 
 #endif

@@ -28,7 +28,7 @@ bool Controller::move_linear_dist(double speed_mps, double distance_m) {
   double err = distance_m;
   double prev_err = 0;
   int low_error_run_count = 0;
-  const int low_error_run_count_thresh = 3;
+  const int low_error_run_count_thresh = 5;
   const double err_change_thresh =
       0.0001; // In the units of the quantity being controlled i.e, meters
 

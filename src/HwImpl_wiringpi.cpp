@@ -10,7 +10,7 @@ int init_gpio() {
   return 0;
 }
 
-void end_gpio(int host_id) { }
+void end_gpio(int host_id) {}
 
 int init_i2c(int host_id, uint dev_address) {
   return wiringPiI2CSetup(dev_address);
@@ -56,18 +56,18 @@ int set_pwm_mode(int host_id, uint pin, uint freq) {
 }
 
 int write_pwm_dutycycle(int host_id, uint pin, double dutycycle) {
-  pwmWrite(pin, (uint)(dutycycle * pwm_range));
+  return pwmWrite(pin, (uint)(dutycycle * pwm_range));
 }
 
 int set_hw_interrupt(int host_id, uint pin, EdgeType edge_type,
-                     void (*callback)()) {
+                     void (*isr_callback)()) {
   switch (edge_type) {
   case EdgeType::RISING:
-    return wiringPiISR(pin, INT_EDGE_RISING, callback);
+    return wiringPiISR(pin, INT_EDGE_RISING, isr_callback);
   case EdgeType::FALLING:
-    return wiringPiISR(pin, INT_EDGE_FALLING, callback);
+    return wiringPiISR(pin, INT_EDGE_FALLING, isr_callback);
   case EdgeType::EITHER:
-    return wiringPiISR(pin, INT_EDGE_BOTH, callback);
+    return wiringPiISR(pin, INT_EDGE_BOTH, isr_callback);
   default:
     std::cout << "Unknown EdgeType!" << std::endl;
     return -1;

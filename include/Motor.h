@@ -15,17 +15,21 @@ enum MotorSide { LEFT, RIGHT };
 struct MotorPins {
   int pwm;
   int gpio;
-  int enc_a;
-  int enc_b;
+  int enc_a[2]; // One for rising edge and one for falling edge. Because of high
+                // latency in interrupts in RPi, we cannot read gpio in an ISR
+  int enc_b[2];
 };
 
 // Assuming BCM GPIO numbering scheme
 // $ gpio readall    // BCM column
 const std::map<MotorSide, MotorPins> motor_pin_mapping = {
-    {MotorSide::LEFT, {.pwm = 18, .gpio = 15, .enc_a = 23, .enc_b = 24}},
-    {MotorSide::RIGHT, {.pwm = 19, .gpio = 26, .enc_a = 25, .enc_b = 8}}};
+    {MotorSide::LEFT,
+     {.pwm = 18, .gpio = 15, .enc_a = {23, 20}, .enc_b = {24, 16}}},
+    {MotorSide::RIGHT,
+     {.pwm = 19, .gpio = 26, .enc_a = {8, 7}, .enc_b = {25, 12}}}};
 const int mode_pin = 14;
 constexpr double max_pwm = 0.5;
+const uint pwm_freq = 25000;
 
 class Motor {
 
@@ -45,6 +49,7 @@ private:
   int _current_tick_count = 0;
   int _prev_tick_count = 0;
   int _host_id;
+
 };
 
 #endif // MOTOR_H_

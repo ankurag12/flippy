@@ -13,7 +13,7 @@ message("CMAKE_INCLUDE_PATH: ${CMAKE_INCLUDE_PATH}")
 
 include_directories(include)
 
-set(HW_IMPL_SRC HwImpl_wiringpi.cpp)
+set(HW_IMPL_SRC HwImpl_pigpio_if2.cpp)
 
 set(SOURCES src/main.cpp 
             src/LSM6DS33.cpp

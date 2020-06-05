@@ -21,31 +21,39 @@ Motor::Motor(MotorSide side, int host_id) : _side(side), _host_id(host_id) {
   set_digital_io_mode(_host_id, _pin_map.gpio, DigitalIoMode::WRITE_OUTPUT);
 
   // PWM
-  set_pwm_mode(_host_id, _pin_map.pwm, 10000);
-
+  set_pwm_mode(_host_id, _pin_map.pwm, pwm_freq);
+  
   // Encoders
-  set_digital_io_mode(_host_id, _pin_map.enc_a, DigitalIoMode::READ_INPUT);
-  set_digital_io_mode(_host_id, _pin_map.enc_b, DigitalIoMode::READ_INPUT);
+  set_digital_io_mode(_host_id, _pin_map.enc_a[0], DigitalIoMode::READ_INPUT);
+  set_digital_io_mode(_host_id, _pin_map.enc_a[1], DigitalIoMode::READ_INPUT);
+  set_digital_io_mode(_host_id, _pin_map.enc_b[0], DigitalIoMode::READ_INPUT);
+  set_digital_io_mode(_host_id, _pin_map.enc_b[1], DigitalIoMode::READ_INPUT);
 
-  // Set the inital encoder readings as "last"
   // Configure rising and falling edge ISRs on pins for encoders
-  // Ideally this section should be wrapped in an "interrupts disabled" zone
+  // Very dirty way! Ideally there should be a class and then statically linked
+  // Because this code could be run on an RPi running a relatively hefty OS,
+  // interrupts would have latency which would mean reading signal level at the
+  // encoder pins in an ISR wouln't make much sense. To overcome that problem
+  // and still being able to calculate motor direction, we are using a separate
+  // ISR for each encoder pin, and for each edge type (4 pins/ISRs per motor)
   if (_side == MotorSide::LEFT) {
-    g_last_enc_ab_state_left =
-        (read_digital_io(_host_id, _pin_map.enc_a) << 1) |
-        read_digital_io(_host_id, _pin_map.enc_b);
-    set_hw_interrupt(_host_id, _pin_map.enc_a, EdgeType::EITHER,
-                     &ISR_any_edge_left);
-    set_hw_interrupt(_host_id, _pin_map.enc_b, EdgeType::EITHER,
-                     &ISR_any_edge_left);
+    set_hw_interrupt(_host_id, _pin_map.enc_a[0], EdgeType::RISING,
+                     &ISR_rising_edge_a_left);
+    set_hw_interrupt(_host_id, _pin_map.enc_a[1], EdgeType::FALLING,
+                     &ISR_falling_edge_a_left);
+    set_hw_interrupt(_host_id, _pin_map.enc_b[0], EdgeType::RISING,
+                     &ISR_rising_edge_b_left);
+    set_hw_interrupt(_host_id, _pin_map.enc_b[1], EdgeType::FALLING,
+                     &ISR_falling_edge_b_left);
   } else if (_side == MotorSide::RIGHT) {
-    g_last_enc_ab_state_right =
-        (read_digital_io(_host_id, _pin_map.enc_a) << 1) |
-        read_digital_io(_host_id, _pin_map.enc_b);
-    set_hw_interrupt(_host_id, _pin_map.enc_a, EdgeType::EITHER,
-                     &ISR_any_edge_right);
-    set_hw_interrupt(_host_id, _pin_map.enc_b, EdgeType::EITHER,
-                     &ISR_any_edge_right);
+    set_hw_interrupt(_host_id, _pin_map.enc_a[0], EdgeType::RISING,
+                     &ISR_rising_edge_a_right);
+    set_hw_interrupt(_host_id, _pin_map.enc_a[1], EdgeType::FALLING,
+                     &ISR_falling_edge_a_right);
+    set_hw_interrupt(_host_id, _pin_map.enc_b[0], EdgeType::RISING,
+                     &ISR_rising_edge_b_right);
+    set_hw_interrupt(_host_id, _pin_map.enc_b[1], EdgeType::FALLING,
+                     &ISR_falling_edge_b_right);
   }
 }
 
