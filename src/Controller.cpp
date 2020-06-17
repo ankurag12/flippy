@@ -67,3 +67,11 @@ bool Controller::stop() {
   _right_motor.run(0);
   return true;
 }
+
+bool Controller::flip() {
+  _left_motor.run(1.0);
+  _right_motor.run(1.0);
+  std::this_thread::sleep_for(1000ms);
+  stop();
+  return true;
+}
