@@ -10,10 +10,15 @@ int main(int argc, char **argv) {
     std::cout << "1. linear_dist" << std::endl << "2. flip" << std::endl;
     return 0;
   }
-  std::string arg(argv[1]);
-  if (arg == "linear_dist") {
-    controller.move_linear_dist(0, 0.18);
-  } else if (arg == "flip") {
+  std::string contrl_type(argv[1]);
+  if (contrl_type == "linear_dist") {
+    if (argc == 2) {
+      controller.move_linear_dist(0, 0.18);
+    }
+    else {
+      controller.move_linear_dist(0, std::stod(argv[2]));
+    }
+  } else if (contrl_type == "flip") {
     controller.flip();
   }
   else {
