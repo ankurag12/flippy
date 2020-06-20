@@ -21,4 +21,4 @@ void update_tick_count(EncoderEdgeType current_edge_type,
                        volatile EncoderEdgeType *last_edge_type,
                        volatile int *tick_count);
 
-#endif // Encoder.h
+#endif // ENCODER_H_

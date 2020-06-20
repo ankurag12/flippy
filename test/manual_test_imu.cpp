@@ -7,7 +7,7 @@
 using namespace std::chrono_literals;
 
 int main() {
-  LSM6DS33 imu = LSM6DS33();
+  LSM6DS33 imu;
   imu.init(1660, 2, 200, 1660, 245);
   while (true) {
     std::cout << "X accel = " << imu.get_accel_reading(Axis::X)

@@ -37,4 +37,4 @@ int write_pwm_dutycycle(int host_id, uint pin, double dutycycle);
 int set_hw_interrupt(int host_id, uint pin, EdgeType edge_type, void(*isr_callback)());
 
 
-#endif
+#endif  // HWIMPL_H_

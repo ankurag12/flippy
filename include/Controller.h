@@ -1,3 +1,6 @@
+#ifndef CONTROLLER_H_
+#define CONTROLLER_H_
+
 #include "LSM6DS33.h"
 #include "Motor.h"
 
@@ -31,3 +34,5 @@ private:
   Motor _right_motor;
   LSM6DS33 _imu;
 };
+
+#endif // CONTROLLER_H_

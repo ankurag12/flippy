@@ -20,6 +20,7 @@ set(SOURCES src/main.cpp
             src/Motor.cpp
             src/Encoder.cpp
             src/Controller.cpp
+            src/ConfigReader.cpp
             src/${HW_IMPL_SRC})
 
 add_executable(${TARGET} ${SOURCES})

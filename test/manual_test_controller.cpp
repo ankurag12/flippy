@@ -2,7 +2,7 @@
 #include <iostream>
 
 int main(int argc, char **argv) {
-  Controller controller = Controller();
+  Controller controller;
   if (argc == 1) {
     std::cout << "Should enter type of controller to run. Available "
                  "controllers:"

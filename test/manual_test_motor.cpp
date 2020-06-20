@@ -8,7 +8,7 @@ using namespace std::chrono_literals;
 
 int main() {
 
-  Motor left_motor = Motor(MotorSide::LEFT);
+  Motor left_motor(MotorSide::LEFT);
   std::cout << "Left motor tick count = " << left_motor.get_current_tick_count()
             << std::endl;
   left_motor.run(0.2);
@@ -24,7 +24,7 @@ int main() {
   std::cout << "Left motor tick count = " << left_motor.get_current_tick_count()
             << std::endl;
 
-  Motor right_motor = Motor(MotorSide::RIGHT);
+  Motor right_motor(MotorSide::RIGHT);
   std::cout << "Right motor tick count = "
             << right_motor.get_current_tick_count() << std::endl;
 

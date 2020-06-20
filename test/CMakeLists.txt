@@ -24,5 +24,6 @@ add_executable(manual_test_controller
     ../src/Encoder.cpp
     ../src/Controller.cpp
     ../src/LSM6DS33.cpp
+    ../src/ConfigReader.cpp
     ../src/${HW_IMPL_SRC})
 target_link_libraries(manual_test_controller wiringPi pigpiod_if2 rt)
