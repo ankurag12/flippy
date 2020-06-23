@@ -20,6 +20,10 @@ int main(int argc, char **argv) {
     }
   } else if (contrl_type == "flip") {
     controller.flip();
+  } else if (contrl_type == "balance") {
+    controller.balance();
+  } else if (contrl_type == "tilt_angle") {
+    controller.get_tilt_angle();
   }
   else {
     std::cout << "Unknown controller argument" << std::endl;

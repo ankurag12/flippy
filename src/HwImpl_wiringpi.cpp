@@ -20,6 +20,10 @@ int read_i2c_byte(int host_id, int i2c_handler, uint reg_address) {
   return wiringPiI2CReadReg8(i2c_handler, reg_address);
 }
 
+int read_i2c_word(int host_id, int i2c_handler, uint reg_address) {
+  return wiringPiI2CReadReg16(i2c_handler, reg_address);
+}
+
 int write_i2c_byte(int host_id, int i2c_handler, uint reg_address, uint data) {
   return wiringPiI2CWriteReg8(i2c_handler, reg_address, data);
 }

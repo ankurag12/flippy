@@ -12,8 +12,9 @@ class LSM6DS33 {
 public:
   LSM6DS33(int host_id = -1);
 
-  bool init(uint odr_accel, uint fs_accel, uint filter_bw_accel, uint odr_gyro,
-            uint fs_gyro);
+  bool init(uint odr_accel = 1660, uint fs_accel = 2,
+            uint filter_bw_accel = 200, uint odr_gyro = 1660,
+            uint fs_gyro = 245);
 
   double get_accel_reading(Axis axis);
   double get_gyro_reading(Axis axis);
@@ -31,6 +32,7 @@ private:
   static constexpr byte _device_address = 0x6b;
   static constexpr byte _who_am_i_id = 0x69;
   static constexpr byte _dout_word_length = 16;
+  static constexpr uint _dout_word_fs = (1 << _dout_word_length) - 1;
 
   // Map for full scale for the accelerometer in +/- g
   static const std::map<uint, byte> _fs_accel_map;

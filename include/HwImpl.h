@@ -21,6 +21,7 @@ void end_gpio(int host_id);
 // I2C
 int init_i2c(int host_id, uint dev_address);
 int read_i2c_byte(int host_id, int i2c_handler, uint reg_address);
+int read_i2c_word(int host_id, int i2c_handler, uint reg_address);
 int write_i2c_byte(int host_id, int i2c_handler, uint reg_address, uint data);
 
 // Digital IO

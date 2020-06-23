@@ -8,7 +8,7 @@ class Controller {
 public:
   Controller();
   bool flip();
-  void balance();
+  bool balance();
   bool set_linear_speed(double speed_mps);
   bool set_angular_speed(double speed_dps);
   // ballpark for default values:
@@ -20,6 +20,7 @@ public:
   // 27 deg/s, at max power (220 rpm) = 13.8 deg/s
   bool move_angular_dist(double speed_dps = 10, double angle_deg = 90);
   bool stop();
+  double get_tilt_angle();
 
 private:
   static constexpr double _wheel_dia_m = 0.06;
@@ -27,6 +28,11 @@ private:
   static constexpr double _motor_no_load_rpm = Motor::no_load_rpm;
   static constexpr double _motor_gear_ratio = Motor::gear_ratio;
   static constexpr uint _motor_enc_counts_per_rev = Motor::enc_counts_per_rev;
+  static constexpr uint _imu_odr_accel = 1660;  // Hz
+  static constexpr uint _imu_fs_accel = 2;      // g
+  static constexpr uint _imu_filter_bw_accel = 200; // Hz
+  static constexpr uint _imu_odr_gyro = 1660;   // Hz
+  static constexpr uint _imu_fs_gyro = 500;     // deg/s
   double _max_linear_speed;
   double _max_rotational_speed;
   int _host_id;

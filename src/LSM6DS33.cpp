@@ -55,7 +55,7 @@ bool LSM6DS33::init(uint odr_accel, uint fs_accel, uint filter_bw_accel,
 
   byte odr_gyro_ctrl = _odr_gyro_map.at(_odr_gyro);
   byte fs_gyro_ctrl = _fs_gyro_map.at(_fs_gyro);
-  byte gyro_mode = odr_gyro_ctrl << 4 | fs_gyro_ctrl << 2;
+  byte gyro_mode = odr_gyro_ctrl << 4 | fs_gyro_ctrl << 1;
   ret = write_i2c_byte(_host_id, _i2c_handle, _RegisterAddress::CTRL2_G,
                        gyro_mode);
 
@@ -64,19 +64,13 @@ bool LSM6DS33::init(uint odr_accel, uint fs_accel, uint filter_bw_accel,
 }
 
 double LSM6DS33::get_accel_reading(Axis axis) {
-  byte raw_byte_lo = (byte)read_i2c_byte(_host_id, _i2c_handle,
-                                         _RegisterAddress::OUTX_L_XL + axis);
-  byte raw_byte_hi = (byte)read_i2c_byte(_host_id, _i2c_handle,
-                                         _RegisterAddress::OUTX_H_XL + axis);
-  int16_t accel_unscaled = raw_byte_hi << 8 | raw_byte_lo;
-  return accel_unscaled / ((1 << _dout_word_length) / (2.0 * _fs_accel));
+  int16_t accel_unscaled =
+      read_i2c_word(_host_id, _i2c_handle, _RegisterAddress::OUTX_L_XL + axis);
+  return accel_unscaled * (2.0 * _fs_accel) / _dout_word_fs;
 }
 
 double LSM6DS33::get_gyro_reading(Axis axis) {
-  byte raw_byte_lo = (byte)read_i2c_byte(_host_id, _i2c_handle,
-                                         _RegisterAddress::OUTX_L_G + axis);
-  byte raw_byte_hi = (byte)read_i2c_byte(_host_id, _i2c_handle,
-                                         _RegisterAddress::OUTX_H_G + axis);
-  int16_t gyro_unscaled = raw_byte_hi << 8 | raw_byte_lo;
-  return gyro_unscaled / ((1 << _dout_word_length) / (2.0 * _fs_gyro));
+  int16_t gyro_unscaled =
+      read_i2c_word(_host_id, _i2c_handle, _RegisterAddress::OUTX_L_G + axis);
+  return gyro_unscaled * (2.0 * _fs_gyro) / _dout_word_fs;
 }

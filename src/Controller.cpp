@@ -15,7 +15,8 @@ Controller::Controller()
       _right_motor(Motor(MotorSide::RIGHT, _host_id)),
       _imu(LSM6DS33(_host_id)) {
   // Initialize IMU
-  _imu.init(1660, 2, 200, 1660, 245);
+  _imu.init(_imu_odr_accel, _imu_fs_accel, _imu_filter_bw_accel, _imu_odr_gyro,
+            _imu_fs_gyro);
 }
 
 bool Controller::move_linear_dist(double speed_mps, double distance_m) {
@@ -24,7 +25,7 @@ bool Controller::move_linear_dist(double speed_mps, double distance_m) {
                           2;
   // Read config file
   ConfigReader config_reader;
-  PidConfig gain = config_reader.get_pid_config("linear_dist_pid");
+  PidConfig gain = config_reader.get_pid_gains("linear_dist_pid");
 
   double err = distance_m;
   double prev_err = 0;
@@ -80,4 +81,85 @@ bool Controller::flip() {
   std::this_thread::sleep_for(400ms);
   stop();
   return true;
+}
+
+bool Controller::balance() {
+
+  // Start with stop
+  stop();
+
+  // Read config file
+  ConfigReader config_reader;
+  PidConfig gain_accel = config_reader.get_pid_gains("balance_accel_pid");
+
+  // balancing about x-axis as it is orthogonal to the movement of the robot, so
+  // it will be least affected by linear acceleration, even though sensitivity
+  // won't be as good as about z-axis.
+  const Axis accel_axis = Axis::X;
+  const double min_accel_reading = 0.7;
+  const double accel_setpoint = 1.0;
+
+  double accel_reading = _imu.get_accel_reading(accel_axis);
+  double err = accel_setpoint - accel_reading;
+  double prev_err = 0;
+  double integral_err = err;
+  double pwm_input;
+
+  // Check if robot is almost upright, otherwise the motors could go crazy
+  while (fabs(accel_reading) > min_accel_reading) {
+    pwm_input = gain_accel.p * err;
+    _left_motor.run(pwm_input);
+    _right_motor.run(pwm_input);
+    std::this_thread::sleep_for(10ms); // Loop rate (approximate)
+    accel_reading = _imu.get_accel_reading(accel_axis);
+    std::cout << accel_reading << std::endl;
+    prev_err = err;
+    err = accel_setpoint - accel_reading;
+  }
+  stop();
+  std::cout << "Unrecoverable angle :( make robot stand upright manually and "
+               "run again!"
+            << std::endl;
+  return false;
+}
+
+double Controller::get_tilt_angle() {
+  // Read config file
+  ConfigReader config_reader;
+  FilterConfig filter_weight =
+      config_reader.get_filter_weights("tilt_calc_filter_weight");
+
+  // Estimate bias in gyro
+  std::cout << "Calculating gyro bias, do not move it!" << std::endl;
+  const int num_init_gyro_readings = 200;
+  const int sleep_duration_us = (1000000 / _imu_odr_gyro) + 1;
+  double total = 0.0;
+  for (auto i = 0; i < num_init_gyro_readings; ++i) {
+    total += _imu.get_gyro_reading(Axis::Y);
+    std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration_us));
+  }
+  double gyro_bias = total / num_init_gyro_readings;
+  std::cout << "Gyro bias calculation done." << std::endl;
+
+  double tilt_angle_filtered = 0.0;
+  double tilt_angle_gyro = 0.0;
+  double tilt_angle_accel;
+  auto tik = std::chrono::high_resolution_clock::now();
+
+  while (true) {
+    auto ang_rate = _imu.get_gyro_reading(Axis::Y) - gyro_bias;
+
+    // std::this_thread::sleep_for(10ms);
+    tilt_angle_accel = atan2(_imu.get_accel_reading(Axis::Z),
+                             _imu.get_accel_reading(Axis::X)) *
+                       180 / M_PI;
+    auto tok = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> dt = tok - tik;
+    tik = tok;
+    tilt_angle_gyro = tilt_angle_filtered + ang_rate * dt.count();
+
+    tilt_angle_filtered = filter_weight.alpha * tilt_angle_gyro +
+                          (1 - filter_weight.alpha) * tilt_angle_accel;
+    std::cout << tilt_angle_filtered << std::endl;
+  }
 }

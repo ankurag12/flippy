@@ -16,6 +16,10 @@ int read_i2c_byte(int host_id, int i2c_handler, uint reg_address) {
   return i2c_read_byte_data(host_id, i2c_handler, reg_address);
 }
 
+int read_i2c_word(int host_id, int i2c_handler, uint reg_address) {
+  return i2c_read_word_data(host_id, i2c_handler, reg_address);
+}
+
 int write_i2c_byte(int host_id, int i2c_handler, uint reg_address, uint data) {
   return i2c_write_byte_data(host_id, i2c_handler, reg_address, data);
 }
