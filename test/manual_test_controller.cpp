@@ -14,8 +14,7 @@ int main(int argc, char **argv) {
   if (contrl_type == "linear_dist") {
     if (argc == 2) {
       controller.move_linear_dist(0, 0.18);
-    }
-    else {
+    } else {
       controller.move_linear_dist(0, std::stod(argv[2]));
     }
   } else if (contrl_type == "flip") {
@@ -24,8 +23,7 @@ int main(int argc, char **argv) {
     controller.balance();
   } else if (contrl_type == "tilt_angle") {
     controller.get_tilt_angle();
-  }
-  else {
+  } else {
     std::cout << "Unknown controller argument" << std::endl;
   }
   return 0;

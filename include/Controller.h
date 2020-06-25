@@ -39,6 +39,8 @@ private:
   Motor _left_motor;
   Motor _right_motor;
   LSM6DS33 _imu;
+
+  double _get_gyro_bias();
 };
 
 #endif // CONTROLLER_H_

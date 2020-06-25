@@ -63,7 +63,7 @@ void update_tick_count(EncoderEdgeType current_edge_type,
   } else {
     // Note that apart from actual errors due to skipping interrupts, a change
     // in direction of the motor could also produce this warning
-    std::cout << "WARNING: Skip in encoder detected!" << std::endl;
+    // std::cout << "WARNING: Skip in encoder detected!" << std::endl;
   }
   *last_edge_type = current_edge_type;
 }

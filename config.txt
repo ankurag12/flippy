@@ -1,3 +1,4 @@
 linear_dist_pid 5.0 0.0 0.0
-balance_accel_pid 2.0 0.0 0.0
-tilt_calc_filter_weight 0.95
+balance_tilt_angle_pid 0.05 0.01 0.07
+balance_wheel_speed_pid 0.0 0.0 0.0
+tilt_calc_filter_weight 0.99

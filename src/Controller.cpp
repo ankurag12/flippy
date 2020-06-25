@@ -90,31 +90,61 @@ bool Controller::balance() {
 
   // Read config file
   ConfigReader config_reader;
-  PidConfig gain_accel = config_reader.get_pid_gains("balance_accel_pid");
+  PidConfig gain_tilt_angle =
+      config_reader.get_pid_gains("balance_tilt_angle_pid");
+  FilterConfig filter_weight =
+      config_reader.get_filter_weights("tilt_calc_filter_weight");
 
-  // balancing about x-axis as it is orthogonal to the movement of the robot, so
-  // it will be least affected by linear acceleration, even though sensitivity
-  // won't be as good as about z-axis.
-  const Axis accel_axis = Axis::X;
-  const double min_accel_reading = 0.7;
-  const double accel_setpoint = 1.0;
+  // Maximum angle over which it won't try to balance else motors would go crazy
+  const double tilt_angle_max = 30.0;
+  // Because of robot's unsymmetrical weight distribution
+  const double tilt_angle_setpoint = -5.0;
 
-  double accel_reading = _imu.get_accel_reading(accel_axis);
-  double err = accel_setpoint - accel_reading;
-  double prev_err = 0;
-  double integral_err = err;
+  double err_tilt_angle = 0.0;
+  double int_err_tilt_angle = 0.0;
+  double prev_err_tilt_angle;
+  double diff_err_tilt_angle;
+
   double pwm_input;
 
-  // Check if robot is almost upright, otherwise the motors could go crazy
-  while (fabs(accel_reading) > min_accel_reading) {
-    pwm_input = gain_accel.p * err;
-    _left_motor.run(pwm_input);
-    _right_motor.run(pwm_input);
-    std::this_thread::sleep_for(10ms); // Loop rate (approximate)
-    accel_reading = _imu.get_accel_reading(accel_axis);
-    std::cout << accel_reading << std::endl;
-    prev_err = err;
-    err = accel_setpoint - accel_reading;
+  double gyro_bias = _get_gyro_bias();
+  double tilt_angle_filtered = 0.0;
+  double tilt_angle_gyro;
+  double tilt_angle_accel;
+
+  auto tik = std::chrono::high_resolution_clock::now();
+
+  // Run only if the robot angle is "recoverable"
+  while (fabs(tilt_angle_filtered) < tilt_angle_max) {
+    auto ang_rate = _imu.get_gyro_reading(Axis::Y) - gyro_bias;
+
+    // std::this_thread::sleep_for(10ms);   // Optional
+    tilt_angle_accel = atan2(_imu.get_accel_reading(Axis::Z),
+                             _imu.get_accel_reading(Axis::X)) *
+                       180 / M_PI;
+
+    auto tok = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> dt = tok - tik;
+    tik = tok;
+    tilt_angle_gyro = tilt_angle_filtered + ang_rate * dt.count();
+
+    tilt_angle_filtered = filter_weight.alpha * tilt_angle_gyro +
+                          (1 - filter_weight.alpha) * tilt_angle_accel;
+
+    err_tilt_angle = tilt_angle_setpoint - tilt_angle_filtered;
+    int_err_tilt_angle += err_tilt_angle;
+    diff_err_tilt_angle = err_tilt_angle - prev_err_tilt_angle;
+
+    pwm_input = gain_tilt_angle.p * err_tilt_angle +
+                gain_tilt_angle.i * int_err_tilt_angle +
+                gain_tilt_angle.d * diff_err_tilt_angle;
+    
+    _left_motor.run(-pwm_input);
+    _right_motor.run(-pwm_input);
+    prev_err_tilt_angle = err_tilt_angle;
+
+    std::cout << "err = " << err_tilt_angle << " PWM = " << pwm_input
+              << std::endl;
   }
   stop();
   std::cout << "Unrecoverable angle :( make robot stand upright manually and "
@@ -129,18 +159,7 @@ double Controller::get_tilt_angle() {
   FilterConfig filter_weight =
       config_reader.get_filter_weights("tilt_calc_filter_weight");
 
-  // Estimate bias in gyro
-  std::cout << "Calculating gyro bias, do not move it!" << std::endl;
-  const int num_init_gyro_readings = 200;
-  const int sleep_duration_us = (1000000 / _imu_odr_gyro) + 1;
-  double total = 0.0;
-  for (auto i = 0; i < num_init_gyro_readings; ++i) {
-    total += _imu.get_gyro_reading(Axis::Y);
-    std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration_us));
-  }
-  double gyro_bias = total / num_init_gyro_readings;
-  std::cout << "Gyro bias calculation done." << std::endl;
-
+  double gyro_bias = _get_gyro_bias();
   double tilt_angle_filtered = 0.0;
   double tilt_angle_gyro = 0.0;
   double tilt_angle_accel;
@@ -162,4 +181,18 @@ double Controller::get_tilt_angle() {
                           (1 - filter_weight.alpha) * tilt_angle_accel;
     std::cout << tilt_angle_filtered << std::endl;
   }
+}
+
+double Controller::_get_gyro_bias() {
+  // Estimate bias in gyro
+  std::cout << "Calculating gyro bias, do not move it!" << std::endl;
+  const int num_init_gyro_readings = 200;
+  const int sleep_duration_us = (1000000 / _imu_odr_gyro) + 1;
+  double total = 0.0;
+  for (auto i = 0; i < num_init_gyro_readings; ++i) {
+    total += _imu.get_gyro_reading(Axis::Y);
+    std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration_us));
+  }
+  std::cout << "Gyro bias calculation done." << std::endl;
+  return total / num_init_gyro_readings;
 }
