@@ -8,7 +8,7 @@ class Controller {
 public:
   Controller();
   bool flip();
-  bool balance();
+  bool balance(double distance_setpoint);
   bool set_linear_speed(double speed_mps);
   bool set_angular_speed(double speed_dps);
   // ballpark for default values:

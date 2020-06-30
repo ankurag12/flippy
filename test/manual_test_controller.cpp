@@ -20,7 +20,11 @@ int main(int argc, char **argv) {
   } else if (contrl_type == "flip") {
     controller.flip();
   } else if (contrl_type == "balance") {
-    controller.balance();
+    if (argc == 2) {
+      controller.balance(0.0);
+    } else {
+      controller.balance(std::stod(argv[2]));
+    }
   } else if (contrl_type == "tilt_angle") {
     controller.get_tilt_angle();
   } else {

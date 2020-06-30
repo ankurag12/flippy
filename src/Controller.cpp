@@ -83,7 +83,7 @@ bool Controller::flip() {
   return true;
 }
 
-bool Controller::balance() {
+bool Controller::balance(double distance_setpoint) {
 
   // Start with stop
   stop();
@@ -92,25 +92,36 @@ bool Controller::balance() {
   ConfigReader config_reader;
   PidConfig gain_tilt_angle =
       config_reader.get_pid_gains("balance_tilt_angle_pid");
+  PidConfig gain_distance = config_reader.get_pid_gains("balance_distance_pid");
   FilterConfig filter_weight =
       config_reader.get_filter_weights("tilt_calc_filter_weight");
 
   // Maximum angle over which it won't try to balance else motors would go crazy
   const double tilt_angle_max = 30.0;
   // Because of robot's unsymmetrical weight distribution
-  const double tilt_angle_setpoint = -5.0;
+  const double tilt_angle_setpoint = -4.2;
 
   double err_tilt_angle = 0.0;
   double int_err_tilt_angle = 0.0;
   double prev_err_tilt_angle;
   double diff_err_tilt_angle;
 
-  double pwm_input;
+  double pwm_input = 0.0;
 
   double gyro_bias = _get_gyro_bias();
   double tilt_angle_filtered = 0.0;
   double tilt_angle_gyro;
   double tilt_angle_accel;
+
+  double delta_avg_ticks;
+  double init_avg_ticks = (_left_motor.get_current_tick_count() +
+                           _right_motor.get_current_tick_count()) /
+                          2;
+  double distance_travelled = 0.0;
+  double err_distance;
+  double prev_err_distance;
+  double diff_err_distance;
+  double int_err_distance = 0.0;
 
   auto tik = std::chrono::high_resolution_clock::now();
 
@@ -135,13 +146,27 @@ bool Controller::balance() {
     int_err_tilt_angle += err_tilt_angle;
     diff_err_tilt_angle = err_tilt_angle - prev_err_tilt_angle;
 
+    delta_avg_ticks = (_left_motor.get_current_tick_count() +
+                       _right_motor.get_current_tick_count()) /
+                          2 -
+                      init_avg_ticks;
+    distance_travelled = delta_avg_ticks * (M_PI * _wheel_dia_m) /
+                         (_motor_enc_counts_per_rev * _motor_gear_ratio);
+    err_distance = distance_setpoint - distance_travelled;
+    diff_err_distance = err_distance - prev_err_distance;
+    int_err_distance += err_distance;
+
     pwm_input = gain_tilt_angle.p * err_tilt_angle +
                 gain_tilt_angle.i * int_err_tilt_angle +
-                gain_tilt_angle.d * diff_err_tilt_angle;
-    
+                gain_tilt_angle.d * diff_err_tilt_angle +
+                gain_distance.p * err_distance +
+                gain_distance.i * int_err_distance +
+                gain_distance.d * diff_err_distance;
+
     _left_motor.run(-pwm_input);
     _right_motor.run(-pwm_input);
     prev_err_tilt_angle = err_tilt_angle;
+    prev_err_distance = err_distance;
 
     std::cout << "err = " << err_tilt_angle << " PWM = " << pwm_input
               << std::endl;
