@@ -99,7 +99,9 @@ bool Controller::balance(double distance_setpoint) {
   // Maximum angle over which it won't try to balance else motors would go crazy
   const double tilt_angle_max = 30.0;
   // Because of robot's unsymmetrical weight distribution
-  const double tilt_angle_setpoint = -4.2;
+  const double tilt_angle_setpoint_balance = -4.5;
+  double tilt_angle_setpoint = tilt_angle_setpoint_balance;
+  const double tilt_angle_setpoint_max_change = 2.0;
 
   double err_tilt_angle = 0.0;
   double int_err_tilt_angle = 0.0;
@@ -107,6 +109,8 @@ bool Controller::balance(double distance_setpoint) {
   double diff_err_tilt_angle;
 
   double pwm_input = 0.0;
+  const double left_motor_stiction_offset = 0.05;
+  const double right_motor_stiction_offset = 0.055;
 
   double gyro_bias = _get_gyro_bias();
   double tilt_angle_filtered = 0.0;
@@ -123,28 +127,53 @@ bool Controller::balance(double distance_setpoint) {
   double diff_err_distance;
   double int_err_distance = 0.0;
 
+  const int inner_loop_ctr_lim = 5;
+
   auto tik = std::chrono::high_resolution_clock::now();
 
   // Run only if the robot angle is "recoverable"
   while (fabs(tilt_angle_filtered) < tilt_angle_max) {
-    auto ang_rate = _imu.get_gyro_reading(Axis::Y) - gyro_bias;
 
-    // std::this_thread::sleep_for(10ms);   // Optional
-    tilt_angle_accel = atan2(_imu.get_accel_reading(Axis::Z),
-                             _imu.get_accel_reading(Axis::X)) *
-                       180 / M_PI;
+    for (int i = 0; i < inner_loop_ctr_lim; ++i) {
+      auto ang_rate = _imu.get_gyro_reading(Axis::Y) - gyro_bias;
+      // std::this_thread::sleep_for(10ms);   // Optional
+      tilt_angle_accel = atan2(_imu.get_accel_reading(Axis::Z),
+                               _imu.get_accel_reading(Axis::X)) *
+                         180 / M_PI;
 
-    auto tok = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> dt = tok - tik;
-    tik = tok;
-    tilt_angle_gyro = tilt_angle_filtered + ang_rate * dt.count();
+      auto tok = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> dt = tok - tik;
+      tik = tok;
+      tilt_angle_gyro = tilt_angle_filtered + ang_rate * dt.count();
 
-    tilt_angle_filtered = filter_weight.alpha * tilt_angle_gyro +
-                          (1 - filter_weight.alpha) * tilt_angle_accel;
+      tilt_angle_filtered = filter_weight.alpha * tilt_angle_gyro +
+                            (1 - filter_weight.alpha) * tilt_angle_accel;
 
-    err_tilt_angle = tilt_angle_setpoint - tilt_angle_filtered;
-    int_err_tilt_angle += err_tilt_angle;
-    diff_err_tilt_angle = err_tilt_angle - prev_err_tilt_angle;
+      err_tilt_angle = tilt_angle_setpoint - tilt_angle_filtered;
+      int_err_tilt_angle += err_tilt_angle;
+      diff_err_tilt_angle = err_tilt_angle - prev_err_tilt_angle;
+
+      pwm_input = gain_tilt_angle.p * err_tilt_angle +
+                  gain_tilt_angle.i * int_err_tilt_angle +
+                  gain_tilt_angle.d * diff_err_tilt_angle;
+
+      if (pwm_input > 0) {
+        _left_motor.run(-(pwm_input + left_motor_stiction_offset));
+        _right_motor.run(-(pwm_input + right_motor_stiction_offset));
+      } else if (pwm_input < 0) {
+        _left_motor.run(-(pwm_input - left_motor_stiction_offset));
+        _right_motor.run(-(pwm_input - right_motor_stiction_offset));
+      } else {
+        _left_motor.run(pwm_input);
+        _right_motor.run(pwm_input);
+      }
+      prev_err_tilt_angle = err_tilt_angle;
+      prev_err_distance = err_distance;
+
+      // std::cout << "err_tilt_angle = " << err_tilt_angle << " PWM = " <<
+      // pwm_input
+      //          << std::endl;
+    }
 
     delta_avg_ticks = (_left_motor.get_current_tick_count() +
                        _right_motor.get_current_tick_count()) /
@@ -156,20 +185,20 @@ bool Controller::balance(double distance_setpoint) {
     diff_err_distance = err_distance - prev_err_distance;
     int_err_distance += err_distance;
 
-    pwm_input = gain_tilt_angle.p * err_tilt_angle +
-                gain_tilt_angle.i * int_err_tilt_angle +
-                gain_tilt_angle.d * diff_err_tilt_angle +
-                gain_distance.p * err_distance +
-                gain_distance.i * int_err_distance +
-                gain_distance.d * diff_err_distance;
+    double tilt_angle_setpoint_change = gain_distance.p * err_distance +
+                                        gain_distance.i * int_err_distance +
+                                        gain_distance.d * diff_err_distance;
 
-    _left_motor.run(-pwm_input);
-    _right_motor.run(-pwm_input);
-    prev_err_tilt_angle = err_tilt_angle;
-    prev_err_distance = err_distance;
-
-    std::cout << "err = " << err_tilt_angle << " PWM = " << pwm_input
-              << std::endl;
+    // Clip tilt_angle_setpoint_change
+    if (tilt_angle_setpoint_change > tilt_angle_setpoint_max_change) {
+      tilt_angle_setpoint_change = tilt_angle_setpoint_max_change;
+    } else if (tilt_angle_setpoint_change < -tilt_angle_setpoint_max_change) {
+      tilt_angle_setpoint_change = -tilt_angle_setpoint_max_change;
+    }
+    tilt_angle_setpoint =
+        tilt_angle_setpoint_balance + tilt_angle_setpoint_change;
+    std::cout << "err_distance = " << err_distance
+              << " tilt_angle_setpoint = " << tilt_angle_setpoint << std::endl;
   }
   stop();
   std::cout << "Unrecoverable angle :( make robot stand upright manually and "
