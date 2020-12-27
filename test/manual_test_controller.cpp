@@ -7,7 +7,7 @@ int main(int argc, char **argv) {
     std::cout << "Should enter type of controller to run. Available "
                  "controllers:"
               << std::endl;
-    std::cout << "1. linear_dist" << std::endl << "2. flip" << std::endl;
+    std::cout << "1. linear_dist" << std::endl << "2. flip" << std::endl << "3. balance" << std::endl << "4. tilt_angle" << std::endl;
     return 0;
   }
   std::string contrl_type(argv[1]);
